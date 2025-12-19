@@ -12,7 +12,7 @@ except ImportError:
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-DEFAULT_MODEL = "gpt-3.5-turbo"
+DEFAULT_MODEL = "gpt-5-mini"
 TEMPERATURE = 0.7
 
 # Agent Configuration
