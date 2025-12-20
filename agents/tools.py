@@ -31,26 +31,35 @@ class SalesAnalysisTools:
         """Get list of tools for the agent"""
 
         @tool
-        def calculate_average_sales(num_weeks: int = 4) -> str:
+        def calculate_average_sales(num_weeks: str = "4") -> str:
             """
             Calculate average sales over the last N weeks.
             Use this to get a baseline understanding of recent sales performance.
 
             Args:
-                num_weeks: Number of recent weeks to average (default: 4)
+                num_weeks: Number of recent weeks to average (e.g., "4", "8", "12")
 
             Returns:
                 String describing the average sales
             """
             try:
-                num_weeks = int(num_weeks)
+                # Parse input - handle various formats
+                weeks_str = str(num_weeks).strip()
+                # Extract first number found
+                import re
+                numbers = re.findall(r'(\d+)', weeks_str)
+                if numbers:
+                    num = int(numbers[0])
+                else:
+                    num = 4  # default
+
                 if len(self.historical_data) == 0:
                     return "No historical data available."
 
-                recent_data = self.historical_data.tail(num_weeks)
+                recent_data = self.historical_data.tail(num)
                 avg_sales = recent_data[self.sales_column].mean()
 
-                return f"Average sales over the last {num_weeks} weeks: ${avg_sales:,.2f}"
+                return f"Average sales over the last {num} weeks: ${avg_sales:,.2f}"
             except Exception as e:
                 return f"Error calculating average: {str(e)}"
 
@@ -152,25 +161,34 @@ class SalesAnalysisTools:
                 return f"Error checking seasonality: {str(e)}"
 
         @tool
-        def get_historical_data(num_weeks: int = 8) -> str:
+        def get_historical_data(num_weeks: str = "8") -> str:
             """
             Get detailed historical sales data for the last N weeks.
             Use this to see the actual week-by-week sales figures.
 
             Args:
-                num_weeks: Number of recent weeks to retrieve (default: 8)
+                num_weeks: Number of recent weeks to retrieve (e.g., "8", "10", "12")
 
             Returns:
                 String with formatted historical data
             """
             try:
-                num_weeks = int(num_weeks)
+                # Parse input - handle various formats
+                weeks_str = str(num_weeks).strip()
+                # Extract first number found
+                import re
+                numbers = re.findall(r'(\d+)', weeks_str)
+                if numbers:
+                    num = int(numbers[0])
+                else:
+                    num = 8  # default
+
                 if len(self.historical_data) == 0:
                     return "No historical data available."
 
-                recent_data = self.historical_data.tail(num_weeks)
+                recent_data = self.historical_data.tail(num)
 
-                result = f"Last {min(num_weeks, len(recent_data))} weeks of sales data:\n"
+                result = f"Last {min(num, len(recent_data))} weeks of sales data:\n"
                 for idx, row in recent_data.iterrows():
                     sales_val = row[self.sales_column]
                     result += f"  Week {idx + 1}: ${sales_val:,.2f}\n"
