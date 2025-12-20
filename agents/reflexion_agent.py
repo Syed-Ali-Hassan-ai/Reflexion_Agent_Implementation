@@ -155,7 +155,34 @@ Thought: {{agent_scratchpad}}"""
                 'task_description': task
             }
 
+        except StopIteration as e:
+            # Handle StopIteration specifically (common LangChain issue)
+            import traceback
+            print(f"StopIteration error caught. This is often caused by tool execution issues.")
+            print(f"Traceback: {traceback.format_exc()}")
+
+            # Try to extract any partial results
+            partial_prediction = 0.0
+            if self.execution_log:
+                # Attempt to extract from partial execution
+                partial_result = {'intermediate_steps': self.execution_log, 'output': ''}
+                partial_prediction = self._extract_prediction(partial_result)
+
+            return {
+                'prediction': partial_prediction,
+                'reasoning': f"Agent execution incomplete (StopIteration). This may be due to tool parameter issues. Partial prediction extracted: ${partial_prediction:,.2f}",
+                'intermediate_steps': self.execution_log,
+                'success': partial_prediction > 0,
+                'error': f"StopIteration: {str(e)}",
+                'trial': trial_number,
+                'task_description': task
+            }
+
         except Exception as e:
+            import traceback
+            print(f"Error during agent execution: {e}")
+            print(f"Traceback: {traceback.format_exc()}")
+
             return {
                 'prediction': 0.0,
                 'reasoning': f"Error during prediction: {str(e)}",

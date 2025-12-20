@@ -55,10 +55,13 @@ class SalesAnalysisTools:
                 return f"Error calculating average: {str(e)}"
 
         @tool
-        def check_seasonality() -> str:
+        def check_seasonality(query: str = "") -> str:
             """
             Check for seasonal patterns in the sales data.
             Use this to identify if there are recurring patterns (weekly, monthly, holiday effects).
+
+            Args:
+                query: Optional query parameter (not used, for compatibility)
 
             Returns:
                 String describing seasonal patterns found
@@ -144,10 +147,13 @@ class SalesAnalysisTools:
                 return f"Error retrieving historical data: {str(e)}"
 
         @tool
-        def analyze_trends() -> str:
+        def analyze_trends(query: str = "") -> str:
             """
             Analyze trends in the sales data.
             Use this to identify if sales are growing, declining, or stable.
+
+            Args:
+                query: Optional query parameter (not used, for compatibility)
 
             Returns:
                 String describing the trend analysis
