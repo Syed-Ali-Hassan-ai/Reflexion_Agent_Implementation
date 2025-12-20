@@ -282,6 +282,8 @@ Thought: {{agent_scratchpad}}"""
         Returns:
             Predicted sales value
         """
+        import json
+
         output = result.get('output', '')
 
         # Look for the make_prediction tool call
@@ -289,21 +291,78 @@ Thought: {{agent_scratchpad}}"""
             action, observation = step
             if action.tool == 'make_prediction':
                 try:
-                    # Extract the predicted_sales argument
-                    prediction = float(action.tool_input.get('predicted_sales', 0))
-                    return prediction
-                except:
-                    pass
+                    tool_input = action.tool_input
 
-        # Fallback: try to extract from output text
-        numbers = re.findall(r'\$?([0-9,]+\.?[0-9]*)', output)
+                    # Handle different formats of tool_input
+                    if isinstance(tool_input, dict):
+                        # Direct dictionary access
+                        prediction = float(tool_input.get('predicted_sales', 0))
+                        if prediction > 0:
+                            return prediction
+                    elif isinstance(tool_input, str):
+                        # Try parsing as JSON
+                        try:
+                            parsed = json.loads(tool_input)
+                            if isinstance(parsed, dict):
+                                prediction = float(parsed.get('predicted_sales', 0))
+                                if prediction > 0:
+                                    return prediction
+                        except:
+                            # Try extracting number from string directly
+                            nums = re.findall(r'predicted_sales["\']?\s*[:=]\s*([0-9.]+)', tool_input)
+                            if nums:
+                                return float(nums[0])
+
+                    # Try to extract from observation (the tool's response)
+                    if observation and 'Prediction recorded:' in observation:
+                        nums = re.findall(r'\$([0-9,]+\.?[0-9]*)', observation)
+                        if nums:
+                            cleaned = nums[0].replace(',', '')
+                            return float(cleaned)
+
+                except Exception as e:
+                    print(f"Debug: Error extracting from tool call: {e}")
+                    print(f"Debug: tool_input type: {type(action.tool_input)}")
+                    print(f"Debug: tool_input value: {action.tool_input}")
+
+        # Fallback 1: Look in all observations for recorded predictions
+        for step in result.get('intermediate_steps', []):
+            action, observation = step
+            if observation and 'Prediction recorded:' in str(observation):
+                nums = re.findall(r'\$([0-9,]+\.?[0-9]*)', str(observation))
+                if nums:
+                    try:
+                        cleaned = nums[0].replace(',', '')
+                        return float(cleaned)
+                    except:
+                        pass
+
+        # Fallback 2: try to extract from output text
+        # Look for patterns like $XX,XXX.XX or numbers
+        numbers = re.findall(r'\$([0-9,]+\.?[0-9]*)', output)
         if numbers:
             try:
+                # Clean and convert the first large number found
                 cleaned = numbers[0].replace(',', '')
-                return float(cleaned)
+                value = float(cleaned)
+                if value > 100:  # Sanity check - sales should be at least $100
+                    return value
             except:
                 pass
 
+        # Fallback 3: Look for any large number in output
+        numbers = re.findall(r'([0-9,]+\.?[0-9]+)', output)
+        for num_str in numbers:
+            try:
+                cleaned = num_str.replace(',', '')
+                value = float(cleaned)
+                if value > 1000:  # Likely a sales figure
+                    return value
+            except:
+                pass
+
+        print(f"Warning: Could not extract prediction from agent output")
+        print(f"Output: {output[:200]}")
         return 0.0
 
     def get_execution_trace(self) -> List[Dict[str, Any]]:
