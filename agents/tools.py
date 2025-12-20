@@ -199,24 +199,40 @@ class SalesAnalysisTools:
                 return f"Error analyzing trends: {str(e)}"
 
         @tool
-        def make_prediction(predicted_sales: float, reasoning: str = "") -> str:
+        def make_prediction(predicted_sales: str) -> str:
             """
             Make your final sales prediction.
             Use this as the last step after analyzing the data.
 
             Args:
-                predicted_sales: Your predicted sales amount (in dollars)
-                reasoning: Brief explanation of your reasoning (optional)
+                predicted_sales: Your predicted sales amount in dollars (just the number, e.g., "50000" or "50000.50")
 
             Returns:
                 Confirmation of prediction
+
+            Example:
+                make_prediction("75000")
+                make_prediction("75123.45")
             """
             try:
-                predicted_sales = float(predicted_sales)
-                result = f"Prediction recorded: ${predicted_sales:,.2f}"
-                if reasoning:
-                    result += f"\nReasoning: {reasoning}"
+                # Handle different input formats
+                sales_str = str(predicted_sales).strip()
+
+                # Remove dollar signs and commas if present
+                sales_str = sales_str.replace('$', '').replace(',', '')
+
+                # Extract just the number (in case there's extra text)
+                import re
+                numbers = re.findall(r'([0-9]+\.?[0-9]*)', sales_str)
+                if numbers:
+                    sales_value = float(numbers[0])
+                else:
+                    sales_value = float(sales_str)
+
+                result = f"Prediction recorded: ${sales_value:,.2f}"
                 return result
+            except (ValueError, AttributeError) as e:
+                return f"Error making prediction: Could not parse '{predicted_sales}' as a number. Please provide just the numeric value (e.g., '50000')."
             except Exception as e:
                 return f"Error making prediction: {str(e)}"
 
