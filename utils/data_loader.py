@@ -85,7 +85,10 @@ class WalmartDataLoader:
 
     def _create_sample_data(self) -> pd.DataFrame:
         """Create sample Walmart sales data with complex patterns for demonstration"""
-        np.random.seed(42)
+        # Use time-based seed for variation across runs, but deterministic within run
+        import time
+        seed = int(time.time() * 1000) % (2**32)
+        np.random.seed(seed)
 
         stores = [1, 2, 3, 4, 5]
         departments = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -239,7 +242,10 @@ class WalmartDataLoader:
         stores = self.df[store_col].unique()
         depts = self.df[dept_col].unique()
 
-        np.random.seed(42)
+        # Use time-based seed for varied test cases
+        import time
+        seed = int(time.time() * 1000) % (2**32)
+        np.random.seed(seed)
 
         for i in range(num_cases):
             # Random store and department

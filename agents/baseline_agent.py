@@ -8,6 +8,7 @@ from typing import Dict, Any, List
 import re
 import config
 from agents.tools import SalesAnalysisTools
+from agents.smart_tools import SmartSalesTools
 from utils.prompts import REACT_SYSTEM_PROMPT, TASK_DESCRIPTION_TEMPLATE
 
 
@@ -39,8 +40,11 @@ class BaselineAgent:
         Args:
             historical_data: DataFrame with historical sales data
         """
-        # Create tools
-        tools_creator = SalesAnalysisTools(historical_data)
+        # Create tools (use smart tools if enabled)
+        if config.USE_SMART_TOOLS:
+            tools_creator = SmartSalesTools(historical_data)
+        else:
+            tools_creator = SalesAnalysisTools(historical_data)
         tools = tools_creator.get_tools()
 
         # Create prompt template for ReAct

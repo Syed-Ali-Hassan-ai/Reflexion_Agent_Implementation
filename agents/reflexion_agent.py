@@ -8,7 +8,9 @@ from typing import Dict, Any, List
 import re
 import config
 from agents.tools import SalesAnalysisTools
+from agents.smart_tools import SmartSalesTools
 from memory.episodic_memory import EpisodicMemory
+from memory.vector_memory import VectorMemory
 from utils.prompts import (
     REFLEXION_SYSTEM_PROMPT,
     MEMORY_CONTEXT_TEMPLATE,
@@ -36,7 +38,11 @@ class ReflexionAgent:
             model=self.model,
             temperature=config.TEMPERATURE
         )
-        self.memory = EpisodicMemory(use_embeddings=False)  # Simple keyword matching
+        # Use vector memory (FAISS) if enabled, else keyword memory
+        if config.USE_VECTOR_MEMORY:
+            self.memory = VectorMemory(embedding_dim=1536)
+        else:
+            self.memory = EpisodicMemory(use_embeddings=False)
         self.evaluator = PredictionEvaluator()
         self.agent_executor = None
         self.execution_log = []
@@ -49,8 +55,11 @@ class ReflexionAgent:
             historical_data: DataFrame with historical sales data
             task_description: Description of current task (for memory retrieval)
         """
-        # Create tools
-        tools_creator = SalesAnalysisTools(historical_data)
+        # Create tools (use smart tools if enabled)
+        if config.USE_SMART_TOOLS:
+            tools_creator = SmartSalesTools(historical_data)
+        else:
+            tools_creator = SalesAnalysisTools(historical_data)
         tools = tools_creator.get_tools()
 
         # Retrieve relevant memories

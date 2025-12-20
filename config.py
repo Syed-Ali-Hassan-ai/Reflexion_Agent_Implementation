@@ -25,6 +25,19 @@ SUCCESS_THRESHOLD = 10.0  # MAPE threshold for success (10%)
 # Memory Configuration
 MAX_MEMORY_ITEMS = 100
 MEMORY_RETRIEVAL_TOP_K = 3
+USE_VECTOR_MEMORY = True  # Use FAISS vector memory (True) or keyword memory (False)
+EMBEDDING_MODEL = "text-embedding-ada-002"  # OpenAI embedding model
+
+# Caching Configuration
+ENABLE_CACHING = True
+CACHE_TTL_HOURS = 24  # Time-to-live for cache entries
+
+# Parallel Execution Configuration
+USE_PARALLEL_TRIALS = True  # Run trials in parallel for faster responses
+MAX_WORKERS = 4  # Maximum concurrent workers
+
+# Smart Tools Configuration
+USE_SMART_TOOLS = True  # Use enhanced tools with statistical analysis
 
 # Dataset Configuration
 DATASET_PATH = "data/walmart_sales.csv"
