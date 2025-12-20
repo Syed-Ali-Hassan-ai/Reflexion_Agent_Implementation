@@ -113,6 +113,39 @@ class SalesAnalysisTools:
                         if holiday_boost > 5:
                             insights.append(f"Holiday weeks show {holiday_boost:.1f}% higher sales on average.")
 
+                # CRITICAL: Check for post-holiday pattern
+                if 'is_post_holiday' in self.historical_data.columns:
+                    post_holiday_avg = self.historical_data[self.historical_data['is_post_holiday'] == 1][self.sales_column].mean()
+                    regular_avg = self.historical_data[self.historical_data['is_post_holiday'] == 0][self.sales_column].mean()
+
+                    if pd.notna(post_holiday_avg) and pd.notna(regular_avg) and regular_avg > 0:
+                        post_holiday_change = ((post_holiday_avg - regular_avg) / regular_avg * 100)
+                        if abs(post_holiday_change) > 5:
+                            if post_holiday_change < 0:
+                                insights.append(f"WARNING: Weeks AFTER holidays show {abs(post_holiday_change):.1f}% LOWER sales (post-holiday slump).")
+                            else:
+                                insights.append(f"Weeks after holidays show {post_holiday_change:.1f}% higher sales.")
+
+                # Check for promotions
+                if 'is_promotion' in self.historical_data.columns:
+                    promo_avg = self.historical_data[self.historical_data['is_promotion'] == 1][self.sales_column].mean()
+                    regular_avg = self.historical_data[self.historical_data['is_promotion'] == 0][self.sales_column].mean()
+
+                    if pd.notna(promo_avg) and pd.notna(regular_avg) and regular_avg > 0:
+                        promo_boost = ((promo_avg - regular_avg) / regular_avg * 100)
+                        if promo_boost > 5:
+                            insights.append(f"Promotion weeks show {promo_boost:.1f}% higher sales.")
+
+                # Check for stock-outs
+                if 'is_stockout' in self.historical_data.columns:
+                    stockout_avg = self.historical_data[self.historical_data['is_stockout'] == 1][self.sales_column].mean()
+                    regular_avg = self.historical_data[self.historical_data['is_stockout'] == 0][self.sales_column].mean()
+
+                    if pd.notna(stockout_avg) and pd.notna(regular_avg) and regular_avg > 0:
+                        stockout_impact = ((stockout_avg - regular_avg) / regular_avg * 100)
+                        if stockout_impact < -5:
+                            insights.append(f"Stock-out weeks show {abs(stockout_impact):.1f}% LOWER sales due to inventory issues.")
+
                 return " ".join(insights) if insights else "No clear seasonal patterns detected."
 
             except Exception as e:

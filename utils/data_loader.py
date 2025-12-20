@@ -84,7 +84,7 @@ class WalmartDataLoader:
         return self.df
 
     def _create_sample_data(self) -> pd.DataFrame:
-        """Create sample Walmart sales data for demonstration"""
+        """Create sample Walmart sales data with complex patterns for demonstration"""
         np.random.seed(42)
 
         stores = [1, 2, 3, 4, 5]
@@ -94,22 +94,60 @@ class WalmartDataLoader:
         data = []
         for store in stores:
             for dept in departments:
-                base_sales = np.random.uniform(10000, 50000)
+                base_sales = np.random.uniform(15000, 45000)
+
+                # Department-specific volatility
+                dept_volatility = 0.15 if dept in [1, 2] else 0.08
+
+                was_holiday_last_week = False
+                was_promo_last_week = False
 
                 for i, week in enumerate(weeks):
-                    # Add trend
-                    trend = base_sales * (1 + 0.001 * i)
+                    # Base trend
+                    trend = base_sales * (1 + 0.002 * i)
 
-                    # Add seasonality (higher sales in Nov-Dec for holidays)
+                    # Strong seasonality
                     month = week.month
+                    day = week.day
                     seasonal = 1.0
-                    if month in [11, 12]:
-                        seasonal = 1.3
-                    elif month in [6, 7]:
-                        seasonal = 1.1
 
-                    # Add random noise
-                    noise = np.random.normal(1.0, 0.1)
+                    is_holiday = 0
+
+                    # Pre-holiday boost (week BEFORE major holidays)
+                    if (month == 11 and day >= 15) or (month == 12 and day >= 15):
+                        seasonal = 1.5  # Major boost before Christmas
+                        is_holiday = 1
+                    elif month == 12 and day <= 7:
+                        seasonal = 1.4  # Early December
+                    elif month == 11 and day >= 1:
+                        seasonal = 1.25  # November (Thanksgiving prep)
+                    elif month in [6, 7]:
+                        seasonal = 1.15  # Summer
+                    elif month in [1, 2]:
+                        seasonal = 0.85  # Post-holiday slump
+
+                    # CRITICAL PATTERN: Post-holiday drop
+                    # Week AFTER holiday has LOWER sales than average
+                    if was_holiday_last_week:
+                        seasonal = 0.65  # 35% DROP after holiday week
+                        is_holiday = 0
+
+                    # Promotion weeks (random, ~10% of weeks)
+                    is_promo = np.random.random() < 0.1
+                    if is_promo and not was_holiday_last_week:
+                        seasonal *= 1.35  # 35% boost during promos
+
+                    # Stock-out events (random, ~5% of weeks)
+                    is_stockout = np.random.random() < 0.05
+                    if is_stockout:
+                        seasonal *= 0.55  # 45% drop due to stock issues
+
+                    # End-of-month effect (people paid, spend more)
+                    if day >= 25:
+                        seasonal *= 1.08
+
+                    # Random noise (department-specific)
+                    noise = np.random.normal(1.0, dept_volatility)
 
                     weekly_sales = trend * seasonal * noise
 
@@ -117,9 +155,16 @@ class WalmartDataLoader:
                         'store': store,
                         'dept': dept,
                         'date': week,
-                        'weekly_sales': max(0, weekly_sales),
-                        'is_holiday': 1 if month in [11, 12] and week.day > 20 else 0
+                        'weekly_sales': max(1000, weekly_sales),  # Minimum sales
+                        'is_holiday': is_holiday,
+                        'is_promotion': 1 if is_promo else 0,
+                        'is_stockout': 1 if is_stockout else 0,
+                        'is_post_holiday': 1 if was_holiday_last_week else 0
                     })
+
+                    # Track state for next week
+                    was_holiday_last_week = (is_holiday == 1)
+                    was_promo_last_week = is_promo
 
         return pd.DataFrame(data)
 

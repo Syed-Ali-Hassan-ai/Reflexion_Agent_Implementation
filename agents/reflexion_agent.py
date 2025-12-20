@@ -207,11 +207,17 @@ Thought: {{agent_scratchpad}}"""
         Returns:
             Reflection text
         """
+        # Determine direction and magnitude of error
+        direction = "TOO HIGH" if prediction > actual else "TOO LOW"
+        error_amount = abs(prediction - actual)
+
         reflection_prompt = REFLECTION_PROMPT.format(
             task_description=task_description,
             prediction=prediction,
             actual=actual,
-            error_percentage=error_percentage
+            error_percentage=error_percentage,
+            direction=direction,
+            error_amount=error_amount
         )
 
         try:
