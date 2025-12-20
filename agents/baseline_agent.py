@@ -48,7 +48,7 @@ class BaselineAgent:
 
 {tools}
 
-Use the following format:
+Use the following format EXACTLY:
 
 Question: the input question you must answer
 Thought: you should always think about what to do
@@ -58,6 +58,12 @@ Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I now know the final answer
 Final Answer: the final answer to the original input question
+
+CRITICAL RULES:
+- After writing "Action Input:", STOP immediately. Do NOT write anything else.
+- NEVER write "Observation:" yourself - the system will provide it automatically
+- After seeing an Observation, start with "Thought:" for your next step
+- Only write "Final Answer:" when you are completely done and have all information
 
 Begin!
 
